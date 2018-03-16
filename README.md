@@ -26,5 +26,5 @@ $ curl http://localhost:4007/api/recipe/11772
 to get the recipe in JSON format. 11772 is recipe ID.
 
 
-Use ALLRECIPES_PARSER_LISTEN_ADDR environment variable to modify service listen address and/or port.
-Default ALLRECIPES_PARSER_LISTEN_ADDR value is :4007.
+Use ```ALLRECIPES_PARSER_LISTEN_ADDR``` environment variable to modify service listen address and/or port.
+Default ```ALLRECIPES_PARSER_LISTEN_ADDR``` value is ```:4007```.
