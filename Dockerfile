@@ -1,7 +1,7 @@
 FROM ubuntu:16.04 
 #FROM armv7/armhf-ubuntu:16.10
 
-ADD . /tmp/repo/src/allrecipes.com_parser
+ADD . /tmp/repo/src/allrecipes
 WORKDIR /opt/webapi
 
 ENV GOPATH="/tmp/repo"
@@ -22,8 +22,8 @@ RUN apt-get update && \
     cd / && \
     rm -rf /tmp/dumb-init-1.2.0 /tmp/v1.2.0.tar.gz && \
     # build
-    cd /tmp/repo/src/allrecipes.com_parser && \
-    go build allrecipes.com_parser/cmd/webapi && \
+    cd /tmp/repo/src/allrecipes && \
+    go build allrecipes/cmd/webapi && \
     mkdir -p /opt/webapi && \
     cp ./webapi /opt/webapi && \
     cd / && \

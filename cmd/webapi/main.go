@@ -1,7 +1,7 @@
 package main
 
 import (
-	"allrecipes.com_parser/pkg/allrecipes"
+	"allrecipes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -22,6 +22,7 @@ REST API guides
 */
 
 func getRecipe(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(allrecipes.GetRecipe("11772"))
 	params := mux.Vars(r)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
