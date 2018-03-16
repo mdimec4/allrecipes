@@ -1,4 +1,4 @@
-FROM ubuntu:16.04 
+FROM ubuntu:17.10 
 #FROM armv7/armhf-ubuntu:16.10
 
 ADD . /tmp/repo/src/allrecipes
@@ -8,12 +8,14 @@ ENV GOPATH="/tmp/repo"
 ENV PATH="/tmp/repo/bin:${PATH}"
 
 RUN apt-get update && \
+    apt-get install -y --no-install-recommends --reinstall ca-certificates && \
     apt-get install -y --no-install-recommends build-essential \
     golang \
+    git \
     wget && \
     # install dumb init
     cd /tmp && \
-    wget --no-check-certificate -P /tmp https://github.com/Yelp/dumb-init/archive/v1.2.0.tar.gz && \
+    wget -P /tmp https://github.com/Yelp/dumb-init/archive/v1.2.0.tar.gz && \
     tar xzf /tmp/v1.2.0.tar.gz -C /tmp/ && \
     cd /tmp/dumb-init-1.2.0 && \
     make && \
@@ -23,6 +25,8 @@ RUN apt-get update && \
     rm -rf /tmp/dumb-init-1.2.0 /tmp/v1.2.0.tar.gz && \
     # build
     cd /tmp/repo/src/allrecipes && \
+    go get github.com/golang/dep/cmd/dep && \ 
+    dep ensure && \
     go build allrecipes/cmd/webapi && \
     mkdir -p /opt/webapi && \
     cp ./webapi /opt/webapi && \
@@ -31,6 +35,7 @@ RUN apt-get update && \
     # cleanup
     apt-get remove -y build-essential \
     golang \
+    git \
     wget && \
     apt-get autoremove -y && \
     apt-get clean
