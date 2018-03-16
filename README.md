@@ -6,7 +6,7 @@ This library has only one function which accepts allrecipes.com recipe ID and wi
 ## Include parser in your project
 
 ```go
-import "github.com/mdimec4/allrecipes.com_parser"
+import "github.com/mdimec4/allrecipes"
 
 var recipe allrecipes.Recipe
 var err error
