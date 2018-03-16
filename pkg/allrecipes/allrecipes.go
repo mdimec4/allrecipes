@@ -1,4 +1,4 @@
-package main
+package allrecipes
 
 import (
 	"errors"
@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"strings"
 
@@ -62,9 +61,12 @@ func GetRecipe(recipeID string) (Recipe, error) {
 	// parse html
 	resp, err := http.Get(u.String())
 	if err != nil {
-		return Recipe{}, fmt.Errorf("http get err: %s", err)
+		return Recipe{}, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK /*200*/ {
+		return Recipe{}, fmt.Errorf("allrecipes.com responded with: %s", resp.Status)
+	}
 	ret := Recipe{RecipeID: recipeID, SourceURL: resp.Request.URL.String()}
 	fmt.Println(resp.Request.URL) // new URl with redirect
 
@@ -218,6 +220,7 @@ endloop:
 	return ret, nil
 }
 
+/*
 func main() {
 	//url := "http://allrecipes.com/recipe/231495/texas-boiled-beer-shrimp/"
 	//url := "http://allrecipes.com/recipe/11772/spaghetti-pie-i/?clickId=right%20rail0&internalSource=rr_feed_recipe_sb&referringId=231495%20referringContentType%3Drecipe"
@@ -229,3 +232,4 @@ func main() {
 	fmt.Printf("\nrecipe: %+v\n", recipe)
 
 }
+*/
