@@ -36,4 +36,4 @@ Default ```ALLRECIPES_PARSER_LISTEN_ADDR``` value is ```:4007```.
 ## Docker image
 
 Use provided ``Dockerfile`` to buld docker image.
-To build for arm, you need to first generate ```Dockerfile_arm``` with ```generate_Dockerfile_arm.sh```.
+To build for ARM, you need to first generate ```Dockerfile_arm``` with ```generate_Dockerfile_arm.sh```.
