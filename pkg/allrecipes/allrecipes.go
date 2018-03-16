@@ -14,15 +14,14 @@ import (
 )
 
 type Recipe struct {
-	RecipeID     string   `json:"recipe_id"`
-	Publisher    string   `json:"publisher"`
-	SourceURL    string   `json:"source_url"`
-	Title        string   `json:"title"`
-	ImageURL     string   `json:"image_url"`
-	Description  string   `json:"description"`
-	Ingredients  []string `json:"ingredients"`
-	Instructions []string `json:"instructions"`
-	Tips         []string `json:"tips"`
+	Author      string   `json:"author"`
+	SourceURL   string   `json:"source_url"`
+	Name        string   `json:"name"`
+	ImageURL    string   `json:"image_url"`
+	Description string   `json:"description"`
+	Ingredients []string `json:"ingredients"`
+	Directions  []string `json:"directions"`
+	Footnotes   []string `json:"footnotes"`
 }
 
 func delNewLine(s string) string {
@@ -53,7 +52,7 @@ func GetRecipe(recipeUrl string) (Recipe, error) {
 	// get recipe id from url
 	u, err := url.Parse(recipeUrl)
 	if err != nil {
-		return Recipe{}, err
+		return Recipe{}, fmt.Errorf("parse error %s", err)
 	}
 	if u.Host != "allrecipes.com" {
 		return Recipe{}, errors.New("expected allrecipes.com host name")
@@ -64,10 +63,10 @@ func GetRecipe(recipeUrl string) (Recipe, error) {
 	// parse html
 	resp, err := http.Get(u.String())
 	if err != nil {
-		return Recipe{}, err
+		return Recipe{}, fmt.Errorf("http get err: %s", err)
 	}
 	defer resp.Body.Close()
-	ret := Recipe{RecipeID: u.String(), SourceURL: u.String()}
+	ret := Recipe{SourceURL: u.String()}
 
 	z := html.NewTokenizer(resp.Body)
 endloop:
@@ -78,7 +77,7 @@ endloop:
 			if z.Err() == io.EOF {
 				break endloop
 			}
-			return Recipe{}, z.Err()
+			return Recipe{}, fmt.Errorf("main parser loop error: %s", z.Err())
 		case html.StartTagToken:
 			token := z.Token()
 			if token.DataAtom == atom.H1 &&
@@ -88,12 +87,12 @@ endloop:
 				switch tt {
 				case html.TextToken:
 					token = z.Token()
-					ret.Title = delNewLine(html.UnescapeString(token.Data))
-					fmt.Println("Title>", ret.Title)
+					ret.Name = delNewLine(html.UnescapeString(token.Data))
+					fmt.Println("Name>", ret.Name)
 				case html.ErrorToken:
-					return Recipe{}, z.Err()
+					return Recipe{}, fmt.Errorf("name text err: %s", z.Err())
 				default:
-					return Recipe{}, errors.New("allrecipes parser: author name was expected here")
+					return Recipe{}, errors.New("allrecipes parser: recipe name text was expected here")
 				}
 			} else if token.DataAtom == atom.Span &&
 				checkAttr(token.Attr, "itemprop", "author") {
@@ -102,12 +101,12 @@ endloop:
 				switch tt {
 				case html.TextToken:
 					token = z.Token()
-					ret.Publisher = delNewLine(html.UnescapeString(token.Data))
-					fmt.Println("Publisher>", ret.Publisher)
+					ret.Author = delNewLine(html.UnescapeString(token.Data))
+					fmt.Println("author>", ret.Author)
 				case html.ErrorToken:
-					return Recipe{}, z.Err()
+					return Recipe{}, fmt.Errorf("author text err: %s", z.Err())
 				default:
-					return Recipe{}, errors.New("allrecipes parser: author name was expected here")
+					return Recipe{}, errors.New("allrecipes parser: author name text was expected here")
 				}
 			} else if token.DataAtom == atom.Div &&
 				checkAttr(token.Attr, "itemprop", "description") {
@@ -119,9 +118,9 @@ endloop:
 					ret.Description = delNewLine(html.UnescapeString(token.Data))
 					fmt.Println("Description>", ret.Description)
 				case html.ErrorToken:
-					return Recipe{}, z.Err()
+					return Recipe{}, fmt.Errorf("description text err: %s", z.Err())
 				default:
-					return Recipe{}, errors.New("allrecipes parser: author name was expected here")
+					return Recipe{}, errors.New("allrecipes parser: description text was expected here")
 				}
 			} else if token.DataAtom == atom.Span &&
 				checkAttr(token.Attr, "itemprop", "ingredients") {
@@ -136,7 +135,7 @@ endloop:
 						delNewLine(html.UnescapeString(token.Data)))
 					fmt.Println("Ingredient>", ret.Ingredients[len(ret.Ingredients)-1])
 				case html.ErrorToken:
-					return Recipe{}, z.Err()
+					return Recipe{}, fmt.Errorf("ingredient text err: %s", z.Err())
 				default:
 					return Recipe{}, errors.New("allrecipes parser: ingredient text was expected here")
 				}
@@ -150,13 +149,57 @@ endloop:
 				switch tt {
 				case html.TextToken:
 					token = z.Token()
-					ret.Instructions = append(ret.Instructions,
+					ret.Directions = append(ret.Directions,
 						delNewLine(html.UnescapeString(token.Data)))
-					fmt.Println("Instruction", ret.Instructions[len(ret.Instructions)-1])
+					fmt.Println("Instructioni>", ret.Directions[len(ret.Directions)-1])
 				case html.ErrorToken:
-					return Recipe{}, z.Err()
+					return Recipe{}, fmt.Errorf("direction text err: %s", z.Err())
 				default:
-					return Recipe{}, errors.New("allrecipes parser: instruction text was expected here")
+					return Recipe{}, errors.New("allrecipes parser: direction text was expected here")
+				}
+			} else if token.DataAtom == atom.Span &&
+				checkAttr(token.Attr, "class", "recipe-footnotes__header") {
+				// did we hit footnotes
+				// <span class="recipe-footnotes__header">Nutrition:</span>
+				tt := z.Next()
+				// next token should be text of the footnotes title
+				about := ""
+				switch tt {
+				case html.TextToken:
+					token = z.Token()
+					about = html.UnescapeString(token.Data)
+					fmt.Println("footnotes about:", about)
+				endloopFootnotes:
+					for {
+						// fast forward to next "Li" token
+						tt := z.Next()
+						switch tt {
+						case html.StartTagToken:
+							token = z.Token()
+							if token.DataAtom == atom.Li {
+								tt := z.Next()
+								// next token should be text of the instruction <li>
+								switch tt {
+								case html.TextToken:
+									token = z.Token()
+									ret.Footnotes = append(ret.Footnotes,
+										about+" "+delNewLine(html.UnescapeString(token.Data)))
+									fmt.Println("Footnotes>", ret.Footnotes[len(ret.Footnotes)-1])
+									break endloopFootnotes
+								case html.ErrorToken:
+									return Recipe{}, fmt.Errorf("footnotes text err: %s", z.Err())
+								default:
+									return Recipe{}, errors.New("allrecipes parser: footnotes text was expected here")
+								}
+							}
+						case html.ErrorToken:
+							return Recipe{}, fmt.Errorf("footnotest <li> err: %s", z.Err())
+						}
+					}
+				case html.ErrorToken:
+					return Recipe{}, fmt.Errorf("footnotest title text err: %s", z.Err())
+				default:
+					return Recipe{}, errors.New("allrecipes parser: footnotes title text was expected here")
 				}
 			}
 		case html.SelfClosingTagToken:
@@ -176,8 +219,8 @@ endloop:
 }
 
 func main() {
-	//url := "http://allrecipes.com/recipe/231495/texas-boiled-beer-shrimp/"
-	url := "http://allrecipes.com/recipe/11772/spaghetti-pie-i/?clickId=right%20rail0&internalSource=rr_feed_recipe_sb&referringId=231495%20referringContentType%3Drecipe"
+	url := "http://allrecipes.com/recipe/231495/texas-boiled-beer-shrimp/"
+	//url := "http://allrecipes.com/recipe/11772/spaghetti-pie-i/?clickId=right%20rail0&internalSource=rr_feed_recipe_sb&referringId=231495%20referringContentType%3Drecipe"
 	recipe, err := GetRecipe(url)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err) // TODO stderr
