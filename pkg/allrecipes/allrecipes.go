@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -14,6 +15,7 @@ import (
 )
 
 type Recipe struct {
+	RecipeID    string   `json:"recipe_id"`
 	Author      string   `json:"author"`
 	SourceURL   string   `json:"source_url"`
 	Name        string   `json:"name"`
@@ -48,17 +50,14 @@ func getAttrVal(attr []html.Attribute, key string) string {
 	return ""
 }
 
-func GetRecipe(recipeUrl string) (Recipe, error) {
+func GetRecipe(recipeID string) (Recipe, error) {
 	// get recipe id from url
-	u, err := url.Parse(recipeUrl)
+	u, err := url.Parse("https://www.allrecipes.com")
 	if err != nil {
 		return Recipe{}, fmt.Errorf("parse error %s", err)
 	}
-	if u.Host != "allrecipes.com" {
-		return Recipe{}, errors.New("expected allrecipes.com host name")
-	}
-	//remove Qury part from URL
-	u.RawQuery = ""
+	u.Path = path.Join("recipe", recipeID)
+	fmt.Println(u) //  URl
 
 	// parse html
 	resp, err := http.Get(u.String())
@@ -66,7 +65,8 @@ func GetRecipe(recipeUrl string) (Recipe, error) {
 		return Recipe{}, fmt.Errorf("http get err: %s", err)
 	}
 	defer resp.Body.Close()
-	ret := Recipe{SourceURL: u.String()}
+	ret := Recipe{RecipeID: recipeID, SourceURL: resp.Request.URL.String()}
+	fmt.Println(resp.Request.URL) // new URl with redirect
 
 	z := html.NewTokenizer(resp.Body)
 endloop:
@@ -219,9 +219,9 @@ endloop:
 }
 
 func main() {
-	url := "http://allrecipes.com/recipe/231495/texas-boiled-beer-shrimp/"
+	//url := "http://allrecipes.com/recipe/231495/texas-boiled-beer-shrimp/"
 	//url := "http://allrecipes.com/recipe/11772/spaghetti-pie-i/?clickId=right%20rail0&internalSource=rr_feed_recipe_sb&referringId=231495%20referringContentType%3Drecipe"
-	recipe, err := GetRecipe(url)
+	recipe, err := GetRecipe("231495")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err) // TODO stderr
 		return
