@@ -15,7 +15,11 @@ recipe, error := alrecipes.GetRecipe("11772")
 fmt.Println(recipe.Ingredients)
 ```
 
-## via provided web api which parses recipe into JSON format
+## Usage via provided web api which parses recipe into JSON format
+```
+$ go build github.com/mdimec4/allrecipes/cmd/webapi
+$ ./webapi &
+```
 Example:
 To parse recipe: ```https://www.allrecipes.com/recipe/11772/spaghetti-pie-i/``` you would query this service with
 
@@ -28,3 +32,8 @@ to get the recipe in JSON format. 11772 is recipe ID.
 
 Use ```ALLRECIPES_PARSER_LISTEN_ADDR``` environment variable to modify service listen address and/or port.
 Default ```ALLRECIPES_PARSER_LISTEN_ADDR``` value is ```:4007```.
+
+## Docker image
+
+Use provided ``Dockerfile`` to buld docker image.
+To build for arm, you need to first generate ```Dockerfile_arm``` with ```generate_Dockerfile_arm.sh```.
