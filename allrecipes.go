@@ -56,7 +56,6 @@ func GetRecipe(recipeID string) (Recipe, error) {
 		return Recipe{}, fmt.Errorf("parse error %s", err)
 	}
 	u.Path = path.Join("recipe", recipeID)
-	fmt.Println(u) //  URl
 
 	// parse html
 	resp, err := http.Get(u.String())
@@ -68,7 +67,6 @@ func GetRecipe(recipeID string) (Recipe, error) {
 		return Recipe{}, fmt.Errorf("allrecipes.com responded with: %s", resp.Status)
 	}
 	ret := Recipe{RecipeID: recipeID, SourceURL: resp.Request.URL.String()}
-	fmt.Println(resp.Request.URL) // new URl with redirect
 
 	z := html.NewTokenizer(resp.Body)
 endloop:
@@ -90,7 +88,7 @@ endloop:
 				case html.TextToken:
 					token = z.Token()
 					ret.Name = delNewLine(html.UnescapeString(token.Data))
-					fmt.Println("Name>", ret.Name)
+					// fmt.Println("Name>", ret.Name)
 				case html.ErrorToken:
 					return Recipe{}, fmt.Errorf("name text err: %s", z.Err())
 				default:
@@ -104,7 +102,7 @@ endloop:
 				case html.TextToken:
 					token = z.Token()
 					ret.Author = delNewLine(html.UnescapeString(token.Data))
-					fmt.Println("author>", ret.Author)
+					// fmt.Println("Author>", ret.Author)
 				case html.ErrorToken:
 					return Recipe{}, fmt.Errorf("author text err: %s", z.Err())
 				default:
@@ -118,7 +116,7 @@ endloop:
 				case html.TextToken:
 					token = z.Token()
 					ret.Description = delNewLine(html.UnescapeString(token.Data))
-					fmt.Println("Description>", ret.Description)
+					// fmt.Println("Description>", ret.Description)
 				case html.ErrorToken:
 					return Recipe{}, fmt.Errorf("description text err: %s", z.Err())
 				default:
@@ -135,7 +133,7 @@ endloop:
 					token = z.Token()
 					ret.Ingredients = append(ret.Ingredients,
 						delNewLine(html.UnescapeString(token.Data)))
-					fmt.Println("Ingredient>", ret.Ingredients[len(ret.Ingredients)-1])
+					// fmt.Println("Ingredient>", ret.Ingredients[len(ret.Ingredients)-1])
 				case html.ErrorToken:
 					return Recipe{}, fmt.Errorf("ingredient text err: %s", z.Err())
 				default:
@@ -153,7 +151,7 @@ endloop:
 					token = z.Token()
 					ret.Directions = append(ret.Directions,
 						delNewLine(html.UnescapeString(token.Data)))
-					fmt.Println("Instructioni>", ret.Directions[len(ret.Directions)-1])
+					// fmt.Println("Instructioni>", ret.Directions[len(ret.Directions)-1])
 				case html.ErrorToken:
 					return Recipe{}, fmt.Errorf("direction text err: %s", z.Err())
 				default:
@@ -170,7 +168,7 @@ endloop:
 				case html.TextToken:
 					token = z.Token()
 					about = html.UnescapeString(token.Data)
-					fmt.Println("footnotes about:", about)
+					// fmt.Println("footnotes about:", about)
 				endloopFootnotes:
 					for {
 						// fast forward to next "Li" token
@@ -186,7 +184,7 @@ endloop:
 									token = z.Token()
 									ret.Footnotes = append(ret.Footnotes,
 										about+" "+delNewLine(html.UnescapeString(token.Data)))
-									fmt.Println("Footnotes>", ret.Footnotes[len(ret.Footnotes)-1])
+									// fmt.Println("Footnotes>", ret.Footnotes[len(ret.Footnotes)-1])
 									break endloopFootnotes
 								case html.ErrorToken:
 									return Recipe{}, fmt.Errorf("footnotes text err: %s", z.Err())
@@ -210,7 +208,7 @@ endloop:
 				checkAttr(token.Attr, "property", "og:image") {
 				// <meta property="og:image" content="https://images.media-allrecipes.com/userphotos/560x315/726090.jpg" />
 				imgURL := getAttrVal(token.Attr, "content")
-				fmt.Println("Image>", imgURL)
+				// fmt.Println("Image>", imgURL)
 				ret.ImageURL = imgURL
 			}
 
