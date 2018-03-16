@@ -22,7 +22,6 @@ REST API guides
 */
 
 func getRecipe(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(allrecipes.GetRecipe("11772"))
 	params := mux.Vars(r)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
