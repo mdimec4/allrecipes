@@ -59,5 +59,5 @@ func main() {
 	router.HandleFunc("/api/recipe/{id}", getRecipe).Methods("GET")
 
 	m.Handle("/api/", router)
-	fmt.Fprintf(os.Stderr, "%v\n", http.ListenAndServe(getEnvConf("ALRECIPE_PARSER_LISTEN_ADDR", ":4007"), m))
+	fmt.Fprintf(os.Stderr, "%v\n", http.ListenAndServe(getEnvConf("ALLRECIPES_PARSER_LISTEN_ADDR", ":4007"), m))
 }
